@@ -1,0 +1,51 @@
+// SudokuGUI.java
+// by mostly Dee
+
+import javax.swing.*;
+import javax.swing.UIManager.*;
+import java.awt.*;
+
+/*
+ * Integrates all the front and backend classes to create the interface and initiate a game to be played
+ */
+public class SudokuGUI{
+  
+  public static void main(String[] args){
+    
+    //use Nimbus to make the front end look snazzy
+    try {
+      for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
+        if ("Nimbus".equals(info.getName())) {
+          UIManager.setLookAndFeel(info.getClassName());
+          break;
+        }
+      }
+    } catch (Exception e) {
+      // If Nimbus is not available
+    }
+    
+    //create the frame to hold all the elements
+    JFrame frame = new JFrame("Sudoku");
+    frame.setPreferredSize(new Dimension(750,400));
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    
+    //create the tabbed pane
+    JTabbedPane tp = new JTabbedPane();
+    tp.addTab("Instructions", new InstructionsPanel());
+    Sudoku s = new Sudoku();
+    s.fillFromFile("game.txt");
+    tp.addTab("Game", new SudokuPanel(s));
+    tp.addTab("Info", new InfoPanel());
+    
+    frame.getContentPane().add(tp);
+
+    frame.pack();
+    //change background behind th etabs
+    JLabel background=new JLabel(new ImageIcon("background.jpg"));
+    frame.add(background);
+    frame.setVisible(true);
+    frame.setLocationRelativeTo(null); 
+    
+  }
+  
+}

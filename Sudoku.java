@@ -1,0 +1,275 @@
+/* Sudoku.java
+ * by mostly Molly
+ */
+
+import java.io.*;
+import java.util.*;
+
+public class Sudoku
+{
+  //instance variables
+  private Cell[][] cells;
+  private boolean somethingWrong;
+  private Neighborhood[] subsquares,rows,columns;
+  private boolean gameOver;
+  
+  /*
+   * Constructor for the Sudoku game.
+   * Sets up the cells in one 9x9 neighborhood of the Sudoku game
+   */
+  public Sudoku()
+  {
+    gameOver = false;  
+    subsquares = new Neighborhood[9];
+    rows = new Neighborhood[9];
+    columns = new Neighborhood[9];
+    for (int k=0;k<9;k++)
+      subsquares[k] = new Neighborhood();
+    for (int l=0;l<9;l++)
+      rows[l] = new Neighborhood();
+    for (int m=0;m<9;m++)
+      columns[m] = new Neighborhood();
+    cells = new Cell[9][9];
+    for (int i = 0; i < 9; i++) {
+      for (int j=0; j < 9; j++)
+        cells[i][j] = new Cell();
+    }
+    somethingWrong =  false;
+  }
+  
+  /*
+   * Constructor for the Sudoku game that uses a pre-programmed Sudoku game.
+   * @param fileName the name of the file containing the Sudoku game
+   */
+  public void fillFromFile(String fileName)
+  {
+    BufferedReader reader; 
+    try{
+      reader = new BufferedReader(new FileReader(fileName));
+      while (true)
+      {
+        String line= reader.readLine();
+        if (line==null) break;
+        String[] values = line.split(",");
+        
+        for (int i=0;i<values.length;i++)
+        {
+          if (values[i].equals("-")) setCell(-1,(i/9)+1,(i%9)+1);
+          else
+          {
+            setCell(Integer.parseInt(values[i]), (i/9)+1,(i%9)+1);
+            cells[i/9][i%9].lock();
+          }
+        }
+      }
+      reader.close();
+    } catch(IOException e) {
+      System.out.println(e);
+    }
+    
+  }
+  
+  /*
+   * Private method that prints the array to the console
+   */
+  public void printArray() {
+    for (int i = 0; i < 9; i++) {
+      for (int j=0; j < 9; j++)
+        System.out.print(cells[i][j] + "  ");
+      System.out.print("\n");
+    }
+    System.out.println();
+  }
+  
+  /*
+   * Getter method for the value of a particular cell
+   * @param i the index of the row of that cell
+   * @param j the index of the column of that cell
+   * @return Cell 
+   */
+  public Cell grabCell(int i, int j)
+  {
+    return cells[i][j];
+  }
+  
+  /* 
+   * Sets the value of the cell
+   * Checks based on values of i and j which neighborhood it belongs to
+   * then checks to see if row and column are correct
+   * <p>
+   * If all these are fine adds value and if game is over, changes value of game over
+   * @param val the value to be added
+   * @param i the row to which the value should be added
+   * @param the column to which the value should be added
+   */
+  public void setCell(int val, int i, int j)
+  {
+    if (cells[i-1][j-1].getIsLocked()==true) return;
+    
+    if (cells[i-1][j-1].getNum()!=-1)
+    {
+      rows[i-1].takeOut(cells[i-1][j-1].getNum());
+      columns[j-1].takeOut(cells[i-1][j-1].getNum());
+    }
+    
+    rows[i-1].add(val);
+    columns[j-1].add(val);
+    
+    Neighborhood myNeighbors = new Neighborhood();
+
+    if ((i-1)<3)
+    {
+      if ((j-1)<3)
+        myNeighbors = subsquares[0];
+      
+      else if ((j-1)>=6)
+        myNeighbors = subsquares[2];
+      
+      else
+        myNeighbors = subsquares[1];
+    }
+    
+    else if ((i-1)>=6)
+    {
+      if ((j-1)<3)
+        myNeighbors = subsquares[3];
+      
+      else if ((j-1)>=6)
+        myNeighbors = subsquares[5];
+      
+      else
+        myNeighbors = subsquares[4];
+    }
+    
+    else
+    {
+      if ((j-1)<3)
+        myNeighbors = subsquares[6];
+      
+      else if ((j-1)>=6)
+        myNeighbors = subsquares[8];
+      
+      else
+        myNeighbors = subsquares[7];
+    }
+    
+    //adds specified value to the neighborhood
+    myNeighbors.add(val);
+    myNeighbors.takeOut(cells[i-1][j-1].getNum());
+    
+    cells[i-1][j-1].setNum(val);
+    
+    somethingWrong = isSomethingWrong();
+    gameOver = isGameOver();
+  }
+  
+  /* 
+   * Indicates whether the player makes an "illegal move"
+   * @return boolean true is a move is illegal, false otherwise
+   */
+  public boolean isSomethingWrong()
+  {
+    boolean wrong = false;
+    for (int i=0;i<9;i++)
+    {
+      Neighborhood n = subsquares[i];
+      for (int j=n.size();j>0;j--)
+      {
+        Integer k = n.remove();
+        if (k!=-1 && n.checkIn(k)) wrong=true;
+        n.add(k);
+      }    
+    }
+    
+    for (int i=0;i<9;i++)
+    {
+      Neighborhood n = rows[i];
+      for (int j=n.size();j>0;j--)
+      {
+        Integer k = n.remove();
+        if (k!=-1 && n.checkIn(k)) wrong=true;
+        n.add(k);
+      }    
+    }
+    
+    for (int i=0;i<9;i++)
+    {
+      Neighborhood n = columns[i];
+      for (int j=n.size();j>0;j--)
+      {
+        Integer k = n.remove();
+        if (k!=-1 && n.checkIn(k)) wrong=true;
+        n.add(k);
+      }    
+    }
+    
+    return wrong;
+  }
+  
+  /*
+   * Getter for somethigWrong
+   * @return boolean true is there is an error, false otherwise
+   */
+  public boolean getSomethingWrong()
+  {
+    return somethingWrong;
+  }
+  
+  /*
+   * Clears the board of all numbers
+   */
+  public void clear()
+  {
+    for (int i=0;i<9;i++)
+    {
+      for (int j=0;j<9;j++)
+      {
+        cells[i][j]= new Cell();
+      }
+    }
+  }
+  
+  /*
+   * If all cells are filled, the game is over 
+   * Checks each neighborhood for each value
+   * If somethingwrong is true, game is not over!
+   * @return boolean true is the game is over, false otherwise
+   */
+  public boolean isGameOver()
+  {
+    gameOver = true;
+    for (int i=0;i<9;i++)
+    {
+      for (int j=1;j<10;j++)
+        if (subsquares[i].checkIn(j)==false) gameOver = false;
+      
+      
+    }
+    
+    if (isSomethingWrong()==true) gameOver = false;
+    
+    return gameOver;
+    
+  }
+  
+  //main method for testing
+  public static void main(String[] args)
+  { 
+    Sudoku s1 = new Sudoku();
+    s1.fillFromFile("game1.txt");
+    s1.printArray();
+    
+    //playing entire game
+    Sudoku s2 = new Sudoku();
+    s2.fillFromFile("game2.txt");
+    s2.setCell(1,7,1);
+    s2.setCell(3,7,1);
+    s2.setCell(1,7,1);
+    s2.printArray();
+    System.out.println(s2.isSomethingWrong());
+    System.out.println(s2.isGameOver());
+
+  }
+  
+  
+}

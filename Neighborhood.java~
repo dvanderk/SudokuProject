@@ -1,0 +1,93 @@
+/**
+ * Neighborhood.java
+ * by Dee and Molly
+ * A "neighborhood" object represents the 3x3 square so crucial in Sudoku
+ * It is a queue that can be used to check the values of a specific 3x3
+ */
+
+import javafoundations.*;
+
+public class Neighborhood
+{
+  //instance variable
+  private ArrayQueue<Integer> neighbors;
+  
+  //Constructor, creates an empty queue
+  public Neighborhood()
+  {
+    neighbors = new ArrayQueue<Integer>();
+  }
+  
+  /*add(), adds a value to the queue
+   *@param i the integer to be added
+   */
+  public void add(int i)
+  {
+    neighbors.enqueue(i);
+  }
+  
+  public Integer remove()
+  {
+    return neighbors.dequeue();
+  }
+  
+  public void takeOut(int i)
+  {
+    for (int k=neighbors.size();k>0;k--)
+    {
+      int j = neighbors.dequeue();
+      if (j==i) break;
+      else neighbors.enqueue(j);
+      
+    }
+  }
+  
+  public int size()
+  {
+    return neighbors.size();
+  }
+  
+  /*checkIn()
+   * checks the contents of the queue in order to 
+   * determine if an integer has already been added
+   * @param i the integer to check if already there
+   * @return boolean of whether or not integer is already present
+   */
+  public boolean checkIn(int i)
+  {
+    ArrayQueue<Integer> temp = new ArrayQueue<Integer>();
+    boolean isIn = false;
+    
+    for (int j=neighbors.size();j>0;j--)
+    {
+      if (neighbors.first()==i) isIn = true;
+      temp.enqueue(neighbors.dequeue());
+    }
+    
+    neighbors = temp;
+    return isIn;
+  }
+  
+  public String toString()
+  {
+    String s = "";
+    for (int j=neighbors.size();j>0;j--)
+    {
+      Integer i = neighbors.dequeue();
+      s+=i+",";
+      neighbors.enqueue(i);
+    }
+    return s;
+  }
+  
+  public static void main(String[] args)
+  {
+    Neighborhood n = new Neighborhood();
+    n.add(5);
+    n.add(6);
+    n.takeOut(6);
+    System.out.println(n);
+    
+  }
+    
+}
